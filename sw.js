@@ -1,9 +1,7 @@
-const CACHE_NAME = 'platofacil-v1';
+const CACHE_NAME = 'platofacil-v3';
 const ASSETS_TO_CACHE = [
     './index.html',
     './manifest.json',
-    './icon-192.png',
-    './icon-512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
@@ -12,7 +10,10 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                return cache.addAll(ASSETS_TO_CACHE);
+                return cache.addAll(ASSETS_TO_CACHE).then(() => {
+                    // Intentamos guardar los iconos, pero si fallan (no existen), no rompemos la app
+                    return cache.addAll(['./icon-192.png', './icon-512.png']).catch(err => console.log('Iconos opcionales no encontrados'));
+                });
             })
     );
 });
