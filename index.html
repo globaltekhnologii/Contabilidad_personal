@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contabilidad PlatoFácil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-gradient: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, #4f46e5, #6366f1);
+            color: white;
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { font-size: 1.5rem; font-weight: 700; }
+        
+        .date-filter {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* Tabs Navigation */
+        .tabs {
+            display: flex;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--primary); background: #f3f4f6; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: white; }
+
+        /* Content Areas */
+        .content { padding: 25px; min-height: 500px; }
+        .section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: linear-gradient(rgba(255,255,255,0.1), transparent);
+        }
+
+        .stat-card.success { background: var(--success); }
+        .stat-card.danger { background: var(--danger); }
+        .stat-card.info { background: var(--primary); }
+        .stat-card.warning { background: var(--warning); }
+
+        .stat-label { font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; }
+
+        /* Forms */
+        .form-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 25px;
+        }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
+        
+        input, select {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #d1d5db; border-radius: 8px;
+            font-size: 0.95rem; transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus { outline: none; border-color: var(--primary); ring: 2px solid rgba(99, 102, 241, 0.2); }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 0.95rem;
+            transition: transform 0.1s, box-shadow 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        
+        .btn-action-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-outline { background: white; border: 1px solid #d1d5db; color: #374151; }
+        .btn-outline:hover { background: #f3f4f6; }
+
+        .btn-danger-sm { background: #fee2e2; color: #991b1b; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; }
+        .btn-edit-sm { background: #e0e7ff; color: #3730a3; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; margin-right: 5px;}
+
+        /* Lists */
+        .list-container { max-height: 500px; overflow-y: auto; padding-right: 5px; }
+        
+        .list-item {
+            background: white; padding: 15px; border-radius: 10px;
+            margin-bottom: 10px; border: 1px solid #f3f4f6;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: transform 0.2s;
+        }
+        
+        .list-item:hover { transform: translateX(3px); border-color: #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .list-item.income { border-left: 4px solid var(--success); }
+        .list-item.gasto { border-left: 4px solid var(--danger); }
+        .list-item.cuota { border-left: 4px solid #3b82f6; background: #eff6ff; }
+
+        .amount { font-weight: 700; font-size: 1.1rem; }
+        .amount.pos { color: var(--success); }
+        .amount.neg { color: var(--danger); }
+
+        /* Utilities */
+        .empty-state { text-align: center; padding: 40px; color: #9ca3af; font-style: italic; }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; animation: fadeIn 0.3s; }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .header { flex-direction: column; gap: 10px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-utensils"></i> PlatoFácil Contabilidad</h1>
+                <small id="syncStatus">Datos locales</small>
+            </div>
+            <div class="date-filter">
+                <i class="far fa-calendar-alt"></i> 
+                <span id="periodoActual">Mes Actual</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="app.switchTab('inicio')"><i class="fas fa-chart-pie"></i> Dashboard</button>
+            <button class="tab-btn" onclick="app.switchTab('transacciones')"><i class="fas fa-exchange-alt"></i> Movimientos</button>
+            <button class="tab-btn" onclick="app.switchTab('fijos')"><i class="fas fa-redo"></i> Gastos Fijos</button>
+            <button class="tab-btn" onclick="app.switchTab('tarjetas')"><i class="far fa-credit-card"></i> Tarjetas / Cupos</button>
+            <button class="tab-btn" onclick="app.switchTab('creditos')"><i class="fas fa-landmark"></i> Préstamos / Deudas</button>
+        </div>
+
+        <div class="content">
+            <div id="inicio" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card success">
+                        <div class="stat-label">Ingresos (Mes)</div>
+                        <div class="stat-value" id="totalIngresos">$0</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-label">Gastos (Mes)</div>
+                        <div class="stat-value" id="totalGastos">$0</div>
+                    </div>
+                    <div class="stat-card info">
+                        <div class="stat-label">Balance (Mes)</div>
+                        <div class="stat-value" id="balance">$0</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Deuda Total</div>
+                        <div class="stat-value" id="totalDeudas">$0</div>
+                    </div>
+                    <div class="stat-card" style="background: #0ea5e9;">
+                        <div class="stat-label">Servicios Públicos (Mes)</div>
+                        <div class="stat-value" id="totalServicios">$0</div>
+                    </div>
+                    <div class="stat-card" style="background: #8b5cf6;">
+                        <div class="stat-label">Meta Diaria (Pago Total)</div>
+                        <div class="stat-value" id="metaDiaria">$0</div>
+                        <small style="font-size: 0.75rem; opacity: 0.9; display:block; margin-top:5px">Para cubrir Fijos + Deudas este mes</small>
+                    </div>
+                </div>
+
+                <h3><i class="fas fa-history"></i> Últimos Movimientos</h3>
+                <div id="ultimasTransacciones" class="list-container" style="margin-top: 15px;"></div>
+
+                <div class="btn-action-group">
+                    <button class="btn btn-outline" onclick="app.exportarDatos()" style="flex:1">
+                        <i class="fas fa-download"></i> Copia de Seguridad
+                    </button>
+                    <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()" style="flex:1">
+                        <i class="fas fa-upload"></i> Restaurar Datos
+                    </button>
+                    <input type="file" id="fileInput" hidden accept=".json" onchange="app.importarDatos(this)">
+                </div>
+            </div>
+
+            <div id="transacciones" class="section">
+                <div class="form-card">
+                    <h3 style="margin-bottom: 15px" id="tituloFormTransaccion">Nueva Transacción</h3>
+                    <input type="hidden" id="editId"> <div class="form-group">
+                        <label>Tipo de Movimiento</label>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-outline active" id="btnGasto" onclick="app.setTipo('gasto')" style="flex:1">Gasto</button>
+                            <button class="btn btn-outline" id="btnIngreso" onclick="app.setTipo('ingreso')" style="flex:1">Ingreso</button>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Método de Pago</label>
+                            <select id="metodoPago" onchange="app.cambiarMetodoPago()">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="debito">Tarjeta Débito</option>
+                                <option value="tarjeta">Tarjeta de Crédito</option>
+                                <option value="credito">Crédito / Préstamo</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="divOrigenPago" style="visibility: hidden;">
+                            <label id="labelOrigenPago">Seleccionar Origen</label>
+                            <select id="origenPago"></select>
+                        </div>
+                        <div class="form-group" id="divCuotas" style="display: none;">
+                            <label>Cantidad de Meses (Cuotas)</label>
+                            <input type="number" id="cuotas" value="1" min="1" placeholder="1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Monto</label>
+                            <input type="number" id="monto" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <div style="display: flex; gap: 5px;">
+                                <select id="categoria" style="flex: 1;" onchange="app.verificarCategoria()"></select>
+                                <button class="btn btn-outline" onclick="app.agregarCategoriaManual()" style="width: auto; padding: 0 12px;" title="Nueva Categoría"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <input type="text" id="descripcion" placeholder="Ej: Compra de verduras">
+                    </div>
+
+                    <!-- Sección Dinámica para Pagos de Deuda -->
+                    <div class="form-group" id="divDestinoPago" style="display: none; background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 15px;">
+                        <label id="labelDestinoPago" style="color: #166534; margin-bottom: 8px;">Destino del Pago</label>
+                        <select id="destinoPago" style="margin-bottom: 10px; border-color: #86efac;"></select>
+                        
+                        <div id="divTipoAbono" style="display:none">
+                            <label style="color: #166534; margin-bottom: 8px;">Aplicar abono a:</label>
+                            <select id="tipoAbono" style="border-color: #86efac;"><option value="contado">Deuda del Mes (1 Mes)</option><option value="plazos">Deuda Diferida (Plazos)</option></select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="fechaTransaccion">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="app.guardarTransaccion()">
+                        <i class="fas fa-save"></i> Guardar Transacción
+                    </button>
+                    <button class="btn btn-outline" onclick="app.limpiarFormularioTransacciones()" style="margin-top: 10px; width: 100%; display: none;" id="btnCancelarEdicion">
+                        Cancelar Edición
+                    </button>
+                </div>
+
+                <div id="listadoTransacciones" class="list-container"></div>
+            </div>
+
+            <div id="fijos" class="section">
+                <div class="form-card">
+                    <h3>Nuevo Gasto Fijo</h3>
+                    <div class="form-row">
+                        <div class="form-group"><label>Monto</label><input type="number" id="montoFijo"></div>
+                        <div class="form-group">
+                            <label>Fecha de Pago (Se tomará el día)</label>
+                            <input type="date" id="fechaFijo">
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Descripción</label><input type="text" id="descripcionFijo"></div>
+                    <div class="form-group"><label>Categoría</label><select id="categoriaFijo"></select></div>
+                    <button class="btn btn-primary" onclick="app.agregarGastoFijo()">Agregar Fijo</button>
+                </div>
+                <div id="listadoFijos"></div>
+            </div>
+            
+            <div id="tarjetas" class="section">
+                <div class="form-card">
+                    <h3 id="tituloFormTarjeta">Nueva Tarjeta o Cupo</h3>
+                    <input type="hidden" id="idTarjetaEdit">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo de Cuenta</label>
+                            <select id="tipoTarjetaSelect"><option value="credito">Tarjeta de Crédito</option><option value="app">App Domicilios (Cupo)</option></select>
+                        </div>
+                        <div class="form-group"><label>Nombre</label><input type="text" id="nombreTarjeta"></div>
+                        <div class="form-group"><label>Límite</label><input type="number" id="limiteTarjeta"></div>
+                        <div class="form-group"><label>Deuda 1 Mes</label><input type="number" id="deudaContado" placeholder="0"></div>
+                        <div class="form-group"><label>Deuda Plazos</label><input type="number" id="deudaDiferida" placeholder="0"></div>
+                        <div class="form-group"><label>Cuota Manejo</label><input type="number" id="cuotaManejo" placeholder="0"></div>
+                        <div class="form-group"><label>Interés E.A (%)</label><input type="number" id="interesEA" placeholder="Ej: 25.5"></div>
+                        <div class="form-group">
+                            <label>Día de Corte</label>
+                            <input type="number" id="diaCorte" min="1" max="31" placeholder="Ej: 15">
+                        </div>
+                        <div class="form-group">
+                            <label>Día Límite Pago</label>
+                            <input type="number" id="diaPagoTarjeta" min="1" max="31" placeholder="Ej: 5">
+                        </div>
+                    </div>
+                    <div class="btn-action-group" style="margin-top: 10px;">
+                        <button class="btn btn-primary" onclick="app.agregarTarjeta()">Guardar Tarjeta</button>
+                        <button class="btn btn-outline" id="btnCancelarTarjeta" onclick="app.limpiarFormularioTarjeta()" style="display:none">Cancelar</button>
+                    </div>
+                </div>
+                <div id="listadoTarjetas"></div>
+            </div>
+
+            <div id="creditos" class="section">
+                 <div class="form-card">
+                    <h3 id="tituloFormCredito">Nuevo Préstamo</h3>
+                    <input type="hidden" id="idCreditoEdit">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo de Préstamo</label>
+                            <select id="tipoCreditoSelect"><option value="bancario">Entidad Bancaria</option><option value="personal">Personal (Amigo/Familia)</option></select>
+                        </div>
+                        <div class="form-group"><label>Entidad / Descripción</label><input type="text" id="descCredito" placeholder="Ej: Préstamo Banco"></div>
+                        <div class="form-group"><label>Monto Original</label><input type="number" id="montoCredito" oninput="app.calcularTotalCredito()"></div>
+                        <div class="form-group"><label>Tasa Interés (%)</label><input type="number" id="interesCredito" placeholder="Ej: 2.5" oninput="app.calcularTotalCredito()"></div>
+                        <div class="form-group"><label>Saldo Pendiente</label><input type="number" id="saldoCredito"></div>
+                        <div class="form-group"><label>Fecha Inicio</label><input type="date" id="fechaInicioCredito"></div>
+                        <div class="form-group"><label>Fecha Finalización</label><input type="date" id="fechaFinCredito"></div>
+                        <div class="form-group">
+                            <label>Frecuencia de Pago</label>
+                            <select id="frecuenciaCredito">
+                                <option value="mensual">Mensual</option>
+                                <option value="quincenal">Quincenal</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="diario">Diario</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="btn-action-group" style="margin-top: 10px;">
+                        <button class="btn btn-primary" onclick="app.agregarCredito()">Guardar Crédito</button>
+                        <button class="btn btn-outline" id="btnCancelarCredito" onclick="app.limpiarFormularioCredito()" style="display:none">Cancelar</button>
+                    </div>
+                </div>
+                <div id="listadoCreditos"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            state: {
+                transacciones: [],
+                gastosFijos: [],
+                tarjetas: [],
+                creditos: [],
+                tipoActual: 'gasto',
+                customCategories: []
+            },
+
+            init: function() {
+                this.cargarDatos();
+                this.configurarCategorias();
+                this.actualizarVistas();
+                this.verificarGastosFijos(); // Chequeo automático al inicio
+                this.verificarCorteTarjetas(); // Chequeo de cortes y cuotas de manejo
+                
+                // Fecha por defecto hoy
+                document.getElementById('fechaTransaccion').value = new Date().toLocaleDateString('en-CA'); // Formato YYYY-MM-DD local
+                if(document.getElementById('fechaFijo')) document.getElementById('fechaFijo').value = new Date().toLocaleDateString('en-CA');
+                
+                // Mostrar mes actual en header
+                const opcionesFecha = { month: 'long', year: 'numeric' };
+                document.getElementById('periodoActual').textContent = new Date().toLocaleDateString('es-CO', opcionesFecha);
+            },
+
+            // --- GESTIÓN DE DATOS ---
+            cargarDatos: function() {
+                const t = localStorage.getItem('pf_transacciones');
+                const f = localStorage.getItem('pf_fijos');
+                const c = localStorage.getItem('pf_tarjetas');
+                const cr = localStorage.getItem('pf_creditos');
+                const cats = localStorage.getItem('pf_categorias');
+                if(t) this.state.transacciones = JSON.parse(t);
+                if(f) this.state.gastosFijos = JSON.parse(f);
+                if(c) this.state.tarjetas = JSON.parse(c);
+                if(cr) this.state.creditos = JSON.parse(cr);
+                if(cats) this.state.customCategories = JSON.parse(cats);
+            },
+
+            guardarDatos: function() {
+                localStorage.setItem('pf_transacciones', JSON.stringify(this.state.transacciones));
+                localStorage.setItem('pf_fijos', JSON.stringify(this.state.gastosFijos));
+                localStorage.setItem('pf_tarjetas', JSON.stringify(this.state.tarjetas));
+                localStorage.setItem('pf_creditos', JSON.stringify(this.state.creditos));
+                localStorage.setItem('pf_categorias', JSON.stringify(this.state.customCategories));
+                this.actualizarVistas();
+            },
+
+            // --- LÓGICA DE NEGOCIO ---
+            guardarTransaccion: function() {
+                const idEdicion = document.getElementById('editId').value;
+                const monto = parseFloat(document.getElementById('monto').value);
+                const desc = document.getElementById('descripcion').value;
+                const cat = document.getElementById('categoria').value;
+                const fechaInput = document.getElementById('fechaTransaccion').value;
+                const metodo = document.getElementById('metodoPago').value;
+                const origenId = document.getElementById('origenPago').value;
+                const cuotas = parseInt(document.getElementById('cuotas').value) || 1;
+                const destinoId = document.getElementById('destinoPago').value;
+                const tipoAbono = document.getElementById('tipoAbono').value;
+
+                if (!monto || !desc || !cat) return this.mostrarAlerta('Faltan datos', 'error');
+                if ((metodo === 'tarjeta' || metodo === 'credito') && !origenId) return this.mostrarAlerta('Seleccione el origen del pago', 'error');
+                if ((cat === 'Pago Tarjetas' || cat === 'Pago Apps' || cat === 'Pago Deudas' || cat === 'Pago Préstamos Personales') && !destinoId) return this.mostrarAlerta('Seleccione qué deuda va a pagar', 'error');
+
+                if (idEdicion) {
+                    // MODO EDICIÓN
+                    const index = this.state.transacciones.findIndex(t => t.id == idEdicion);
+                    if (index !== -1) {
+                        this.revertirSaldo(this.state.transacciones[index]); // Reversar anterior
+                        this.state.transacciones[index] = {
+                            ...this.state.transacciones[index],
+                            monto, descripcion: desc, categoria: cat, 
+                            tipo: this.state.tipoActual, fecha: fechaInput, // Guardar fecha tal cual (string)
+                            metodoPago: metodo, origenId: origenId, cuotas: cuotas,
+                            destinoId: destinoId, tipoAbono: tipoAbono
+                        };
+                        this.actualizarSaldo(this.state.transacciones[index]); // Aplicar nuevo
+                        this.mostrarAlerta('Transacción actualizada', 'success');
+                    }
+                } else {
+                    // MODO CREACIÓN
+                    const nuevaTransaccion = {
+                        id: Date.now(),
+                        monto, descripcion: desc, categoria: cat,
+                        tipo: this.state.tipoActual,
+                        fecha: fechaInput, // Guardar fecha tal cual (string)
+                        metodoPago: metodo, origenId: origenId, cuotas: cuotas,
+                        destinoId: destinoId, tipoAbono: tipoAbono
+                    };
+                    this.state.transacciones.push(nuevaTransaccion);
+                    this.actualizarSaldo(nuevaTransaccion);
+                    this.mostrarAlerta('Transacción guardada', 'success');
+                }
+
+                this.guardarDatos();
+                this.limpiarFormularioTransacciones();
+            },
+
+            // Actualiza la deuda de la tarjeta o crédito
+            actualizarSaldo: function(t) {
+                // 1. Aumentar deuda si el origen es crédito/tarjeta (Gasto normal)
+                if (t.tipo !== 'gasto') return;
+                if (t.metodoPago === 'tarjeta') {
+                    const item = this.state.tarjetas.find(x => x.id == t.origenId);
+                    if (item) {
+                        if(t.cuotas > 1) item.deudaDiferida = (item.deudaDiferida || 0) + t.monto;
+                        else item.deudaContado = (item.deudaContado || 0) + t.monto;
+                    }
+                } else if (t.metodoPago === 'credito') {
+                    const item = this.state.creditos.find(x => x.id == t.origenId);
+                    if (item) item.saldo = (item.saldo || 0) + t.monto;
+                }
+
+                // 2. Disminuir deuda si es un PAGO (Abono a deuda)
+                if (t.destinoId && (t.categoria === 'Pago Tarjetas' || t.categoria === 'Pago Apps' || t.categoria === 'Pago Deudas' || t.categoria === 'Pago Préstamos Personales')) {
+                    if (t.categoria === 'Pago Tarjetas' || t.categoria === 'Pago Apps') {
+                        const item = this.state.tarjetas.find(x => x.id == t.destinoId);
+                        if (item) {
+                            if (t.tipoAbono === 'plazos') item.deudaDiferida = Math.max(0, (item.deudaDiferida || 0) - t.monto);
+                            else item.deudaContado = Math.max(0, (item.deudaContado || 0) - t.monto);
+                        }
+                    } else if (t.categoria === 'Pago Deudas' || t.categoria === 'Pago Préstamos Personales') {
+                        const item = this.state.creditos.find(x => x.id == t.destinoId);
+                        if (item) item.saldo = Math.max(0, (item.saldo || 0) - t.monto);
+                    }
+                }
+            },
+
+            // Reversa la deuda si se borra o edita
+            revertirSaldo: function(t) {
+                // 1. Reversar Gasto (Disminuir deuda de origen)
+                if (t.tipo !== 'gasto') return;
+                if (t.metodoPago === 'tarjeta') {
+                    const item = this.state.tarjetas.find(x => x.id == t.origenId);
+                    if (item) {
+                        if(t.cuotas > 1) item.deudaDiferida = Math.max(0, (item.deudaDiferida || 0) - t.monto);
+                        else item.deudaContado = Math.max(0, (item.deudaContado || 0) - t.monto);
+                    }
+                } else if (t.metodoPago === 'credito') {
+                    const item = this.state.creditos.find(x => x.id == t.origenId);
+                    if (item) item.saldo = Math.max(0, (item.saldo || 0) - t.monto);
+                }
+
+                // 2. Reversar Pago (Aumentar deuda de destino porque se borró el pago)
+                if (t.destinoId && (t.categoria === 'Pago Tarjetas' || t.categoria === 'Pago Apps' || t.categoria === 'Pago Deudas' || t.categoria === 'Pago Préstamos Personales')) {
+                    if (t.categoria === 'Pago Tarjetas' || t.categoria === 'Pago Apps') {
+                        const item = this.state.tarjetas.find(x => x.id == t.destinoId);
+                        if (item) {
+                            if (t.tipoAbono === 'plazos') item.deudaDiferida = (item.deudaDiferida || 0) + t.monto;
+                            else item.deudaContado = (item.deudaContado || 0) + t.monto;
+                        }
+                    } else if (t.categoria === 'Pago Deudas' || t.categoria === 'Pago Préstamos Personales') {
+                        const item = this.state.creditos.find(x => x.id == t.destinoId);
+                        if (item) item.saldo = (item.saldo || 0) + t.monto;
+                    }
+                }
+            },
+
+            editarTransaccion: function(id) {
+                const t = this.state.transacciones.find(tr => tr.id === id);
+                if (!t) return;
+
+                this.switchTab('transacciones');
+                this.setTipo(t.tipo);
+                
+                document.getElementById('editId').value = t.id;
+                document.getElementById('monto').value = t.monto;
+                document.getElementById('descripcion').value = t.descripcion;
+                document.getElementById('categoria').value = t.categoria;
+                document.getElementById('fechaTransaccion').value = t.fecha.split('T')[0];
+                
+                document.getElementById('metodoPago').value = t.metodoPago || 'efectivo';
+                this.cambiarMetodoPago();
+                if(t.origenId) document.getElementById('origenPago').value = t.origenId;
+                if(t.cuotas) document.getElementById('cuotas').value = t.cuotas;
+
+                this.verificarCategoria(); // Mostrar campos de pago si aplica
+                if(t.destinoId) document.getElementById('destinoPago').value = t.destinoId;
+                if(t.tipoAbono) document.getElementById('tipoAbono').value = t.tipoAbono;
+                
+                document.getElementById('tituloFormTransaccion').textContent = "Editar Transacción";
+                document.getElementById('btnCancelarEdicion').style.display = 'block';
+                window.scrollTo(0, 0); // Ir arriba
+            },
+
+            eliminarTransaccion: function(id) {
+                if(confirm('¿Borrar esta transacción?')) {
+                    const t = this.state.transacciones.find(tr => tr.id === id);
+                    if(t) this.revertirSaldo(t); // Reversar deuda antes de borrar
+                    this.state.transacciones = this.state.transacciones.filter(t => t.id !== id);
+                    this.guardarDatos();
+                }
+            },
+
+            // --- VISTAS Y CALCULOS ---
+            calcularTotalesMes: function() {
+                const hoy = new Date();
+                const mes = hoy.getMonth();
+                const anio = hoy.getFullYear();
+
+                const movimientosMes = this.state.transacciones.filter(t => {
+                    const d = new Date(t.fecha);
+                    return d.getMonth() === mes && d.getFullYear() === anio;
+                });
+                
+                const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+
+                const ingresos = movimientosMes.filter(t => t.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0);
+                const gastos = movimientosMes.filter(t => t.tipo === 'gasto').reduce((a, b) => a + b.monto, 0);
+
+                // Deuda total: Tarjetas + Créditos
+                const deudaCards = this.state.tarjetas.reduce((acc, t) => acc + (t.deudaContado || 0) + (t.deudaDiferida || 0) + (t.deuda || 0), 0);
+                const deudaCreditos = this.state.creditos.reduce((acc, c) => acc + (c.saldo || 0), 0);
+                const totalFijos = this.state.gastosFijos.reduce((acc, f) => acc + f.monto, 0);
+                const metaDiaria = (deudaCards + deudaCreditos + totalFijos) / diasEnMes;
+
+                // Servicios Públicos
+                const catsServicios = ['Energía', 'Agua', 'Gas', 'Internet', 'Celular'];
+                const totalServicios = movimientosMes.filter(t => t.tipo === 'gasto' && catsServicios.includes(t.categoria)).reduce((a,b) => a + b.monto, 0);
+
+                return { ingresos, gastos, balance: ingresos - gastos, deuda: deudaCards + deudaCreditos, metaDiaria, totalServicios };
+            },
+
+            actualizarVistas: function() {
+                const totales = this.calcularTotalesMes();
+                
+                document.getElementById('totalIngresos').textContent = this.formatoMoneda(totales.ingresos);
+                document.getElementById('totalGastos').textContent = this.formatoMoneda(totales.gastos);
+                document.getElementById('balance').textContent = this.formatoMoneda(totales.balance);
+                document.getElementById('totalDeudas').textContent = this.formatoMoneda(totales.deuda);
+                document.getElementById('metaDiaria').textContent = this.formatoMoneda(totales.metaDiaria);
+                document.getElementById('totalServicios').textContent = this.formatoMoneda(totales.totalServicios);
+
+                this.renderListaTransacciones();
+                this.renderListaFijos();
+                this.renderListaTarjetas();
+                this.renderListaCreditos();
+            },
+
+            renderListaTransacciones: function() {
+                const lista = [...this.state.transacciones].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+                const html = lista.map(t => {
+                    let iconoPago = '';
+                    if(t.metodoPago === 'tarjeta') iconoPago = '<i class="far fa-credit-card" title="Tarjeta Crédito"></i>';
+                    else if(t.metodoPago === 'credito') iconoPago = '<i class="fas fa-landmark" title="Crédito"></i>';
+                    else if(t.metodoPago === 'debito') iconoPago = '<i class="fas fa-credit-card" title="Débito"></i>';
+                    else iconoPago = '<i class="fas fa-money-bill-wave" title="Efectivo"></i>';
+
+                    // Formatear fecha manualmente para evitar errores de zona horaria
+                    const fechaStr = t.fecha.split('T')[0].split('-').reverse().join('/');
+
+                    // Icono Categoría
+                    let iconCat = '';
+                    if(t.categoria === 'Agua') iconCat = '<i class="fas fa-tint" style="color:#3b82f6; margin-right:5px"></i>';
+                    else if(t.categoria === 'Energía') iconCat = '<i class="fas fa-bolt" style="color:#eab308; margin-right:5px"></i>';
+                    else if(t.categoria === 'Gas') iconCat = '<i class="fas fa-burn" style="color:#f97316; margin-right:5px"></i>';
+                    else if(t.categoria === 'Internet' || t.categoria === 'Celular') iconCat = '<i class="fas fa-wifi" style="color:#6366f1; margin-right:5px"></i>';
+
+                    // Info Cuotas
+                    let infoCuotas = '';
+                    if(t.metodoPago === 'tarjeta' && t.cuotas > 1) {
+                        infoCuotas = `<span style="font-size:0.8em; background:#e0e7ff; color:#4338ca; padding:2px 6px; border-radius:4px; margin-left:5px">${t.cuotas} meses</span>`;
+                    }
+
+                    // Info Pago Deuda
+                    let infoPago = '';
+                    if(t.categoria === 'Pago Tarjetas' || t.categoria === 'Pago Apps' || t.categoria === 'Pago Deudas' || t.categoria === 'Pago Préstamos Personales') {
+                        infoPago = ' <i class="fas fa-check-circle" style="color:#10b981; font-size:0.9em" title="Abono a deuda"></i>';
+                    }
+
+                    const isCuota = t.tipo === 'cuota';
+                    return `
+                    <div class="list-item ${t.tipo}">
+                        <div>
+                            <div style="font-weight:600">${iconCat}${t.descripcion}${infoCuotas}${infoPago}</div>
+                            <small style="color:#6b7280">${t.categoria} • ${fechaStr}</small>
+                            <small style="color:#6b7280; margin-left: 8px;">${iconoPago}</small>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="amount ${t.tipo === 'ingreso' ? 'pos' : 'neg'}" style="${isCuota ? 'color:#2563eb' : ''}">
+                                ${t.tipo === 'ingreso' ? '+' : '-'}${this.formatoMoneda(t.monto)}
+                            </div>
+                            <div>
+                                ${!isCuota ? `<button class="btn btn-edit-sm" onclick="app.editarTransaccion(${t.id})"><i class="fas fa-pencil-alt"></i></button>` : ''}
+                                ${!isCuota ? `<button class="btn btn-danger-sm" onclick="app.eliminarTransaccion(${t.id})"><i class="fas fa-trash"></i></button>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+                
+                document.getElementById('listadoTransacciones').innerHTML = html || '<div class="empty-state">No hay movimientos</div>';
+                document.getElementById('ultimasTransacciones').innerHTML = html.slice(0, 1000) || '<div class="empty-state">Sin actividad reciente</div>';
+            },
+
+            renderListaFijos: function() {
+                const lista = this.state.gastosFijos;
+                const html = lista.map(f => `
+                    <div class="list-item gasto">
+                        <div>
+                            <div style="font-weight:600">${f.descripcion}</div>
+                            <small style="color:#6b7280">${f.categoria} • Día ${f.dia}</small>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="amount neg">-${this.formatoMoneda(f.monto)}</div>
+                            <button class="btn btn-danger-sm" onclick="app.eliminarGastoFijo(${f.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('listadoFijos').innerHTML = html || '<div class="empty-state">No hay gastos fijos</div>';
+            },
+
+            renderListaTarjetas: function() {
+                const lista = this.state.tarjetas;
+                const html = lista.map(t => `
+                    ${(() => {
+                        const dContado = t.deudaContado || 0;
+                        const dDiferida = t.deudaDiferida || 0;
+                        const dOld = t.deuda || 0;
+                        const total = dContado + dDiferida + dOld;
+                        const icon = t.tipo === 'app' ? '<i class="fas fa-motorcycle" style="color:#f97316"></i>' : '<i class="far fa-credit-card"></i>';
+                        return `
+                    <div class="list-item">
+                        <div>
+                            <div style="font-weight:600">${icon} ${t.nombre}</div>
+                            <small style="color:#6b7280">Corte: Día ${t.diaCorte || 'N/A'} • Pago: Día ${t.diaPago || 'N/A'} • EA: ${t.interesEA || 0}%</small><br>
+                            <small style="font-size:0.85em; color:#6366f1">1 Mes: ${this.formatoMoneda(dContado + dOld)} | Plazos: ${this.formatoMoneda(dDiferida)}</small>
+                        </div>
+                        <div style="text-align:right">
+                             <div class="amount neg" style="font-size:0.9rem">Total: ${this.formatoMoneda(total)}</div>
+                             <button class="btn btn-edit-sm" onclick="app.editarTarjeta(${t.id})"><i class="fas fa-pencil-alt"></i></button>
+                             <button class="btn btn-danger-sm" onclick="app.eliminarTarjeta(${t.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
+                    })()}
+                `).join('');
+                document.getElementById('listadoTarjetas').innerHTML = html || '<div class="empty-state">No hay tarjetas registradas</div>';
+            },
+
+            renderListaCreditos: function() {
+                const lista = this.state.creditos;
+                const html = lista.map(c => {
+                    const fechaFinStr = c.fechaFin ? c.fechaFin.split('-').reverse().join('/') : '';
+                    const icon = c.tipo === 'personal' ? '<i class="fas fa-user-friends" style="color:#10b981"></i>' : '<i class="fas fa-landmark"></i>';
+                    
+                    return `
+                    <div class="list-item">
+                        <div>
+                            <div style="font-weight:600">${icon} ${c.descripcion}</div>
+                            <small style="color:#6b7280">
+                                Original: ${this.formatoMoneda(c.montoOriginal)} • Tasa: ${c.interes}%<br>
+                                <span style="font-size:0.9em; color:#4b5563">Pago: ${c.frecuencia || 'N/A'} 
+                                ${fechaFinStr ? '• Fin: ' + fechaFinStr : ''}</span>
+                            </small>
+                        </div>
+                        <div style="text-align:right">
+                             <div class="amount neg">Deuda: ${this.formatoMoneda(c.saldo)}</div>
+                             <button class="btn btn-edit-sm" onclick="app.editarCredito(${c.id})"><i class="fas fa-pencil-alt"></i></button>
+                             <button class="btn btn-danger-sm" onclick="app.eliminarCredito(${c.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                document.getElementById('listadoCreditos').innerHTML = html || '<div class="empty-state">No hay créditos registrados</div>';
+            },
+
+            // --- UTILIDADES ---
+            calcularTotalCredito: function() {
+                const monto = parseFloat(document.getElementById('montoCredito').value) || 0;
+                const interes = parseFloat(document.getElementById('interesCredito').value) || 0;
+                // Fórmula: Monto + (Monto * Porcentaje / 100)
+                const total = monto + (monto * (interes / 100));
+                document.getElementById('saldoCredito').value = total > 0 ? Math.round(total) : '';
+            },
+
+            setTipo: function(tipo) {
+                this.state.tipoActual = tipo;
+                document.getElementById('btnGasto').className = `btn btn-outline ${tipo === 'gasto' ? 'active' : ''}`;
+                document.getElementById('btnIngreso').className = `btn btn-outline ${tipo === 'ingreso' ? 'active' : ''}`;
+                // Estilos dinámicos para active
+                if(tipo === 'gasto') document.getElementById('btnGasto').style.cssText = "background:var(--danger); color:white; border-color:var(--danger)";
+                else document.getElementById('btnGasto').style.cssText = "";
+                
+                if(tipo === 'ingreso') document.getElementById('btnIngreso').style.cssText = "background:var(--success); color:white; border-color:var(--success)";
+                else document.getElementById('btnIngreso').style.cssText = "";
+
+                this.configurarCategorias();
+            },
+
+            configurarCategorias: function() {
+                const cats = this.state.tipoActual === 'gasto' 
+                    ? [
+                        'Alimentos', 'Transporte', 'Salud', 'Educación', 'Arriendo', 
+                        'Energía', 'Agua', 'Gas', 'Internet', 'Celular', 
+                        'Streaming (Netflix, etc)', 'Pago Tarjetas', 'Pago Apps', 'Pago Deudas', 'Pago Préstamos Personales',
+                        'Personal', 'Mantenimiento', 'Marketing', 'Otros'
+                      ] 
+                    : ['Ventas Restaurante', 'Domicilios', 'Eventos', 'Otros'];
+                
+                // Agregar categorías personalizadas
+                const custom = this.state.customCategories.filter(c => c.tipo === this.state.tipoActual).map(c => c.nombre);
+                const todas = [...cats, ...custom];
+
+                const select = document.getElementById('categoria');
+                select.innerHTML = todas.map(c => `<option value="${c}">${c}</option>`).join('');
+                
+                // Categorias para fijos
+                const selectFijo = document.getElementById('categoriaFijo');
+                if(selectFijo) selectFijo.innerHTML = [
+                    'Arriendo', 'Energía', 'Agua', 'Gas', 'Internet', 
+                    'Celular', 'Streaming', 'Nómina', 'Software', 
+                    'Seguros', 'Préstamos', 'Otros'
+                ].map(c => `<option value="${c}">${c}</option>`).join('');
+            },
+
+            agregarCategoriaManual: function() {
+                const nombre = prompt("Nombre de la nueva categoría:");
+                if(nombre) {
+                    this.state.customCategories.push({ nombre, tipo: this.state.tipoActual });
+                    this.guardarDatos();
+                    this.configurarCategorias(); // Recargar select
+                }
+            },
+
+            verificarCategoria: function() {
+                const cat = document.getElementById('categoria').value;
+                const divDestino = document.getElementById('divDestinoPago');
+                const selectDestino = document.getElementById('destinoPago');
+                const labelDestino = document.getElementById('labelDestinoPago');
+                const divTipoAbono = document.getElementById('divTipoAbono');
+
+                if (cat === 'Pago Tarjetas') {
+                    divDestino.style.display = 'block';
+                    labelDestino.textContent = 'Seleccionar Tarjeta a Pagar';
+                    // Mostrar solo tarjetas (excluir apps para evitar confusión)
+                    const lista = this.state.tarjetas.filter(t => t.tipo !== 'app');
+                    selectDestino.innerHTML = lista.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+                    divTipoAbono.style.display = 'block';
+                    if(!document.getElementById('descripcion').value) document.getElementById('descripcion').value = 'Abono a Tarjeta';
+                } else if (cat === 'Pago Apps') {
+                    divDestino.style.display = 'block';
+                    labelDestino.textContent = 'Seleccionar App a Pagar';
+                    const lista = this.state.tarjetas.filter(t => t.tipo === 'app');
+                    selectDestino.innerHTML = lista.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+                    divTipoAbono.style.display = 'block';
+                    if(!document.getElementById('descripcion').value) document.getElementById('descripcion').value = 'Pago Deuda App';
+                } else if (cat === 'Pago Deudas') {
+                    divDestino.style.display = 'block';
+                    labelDestino.textContent = 'Seleccionar Crédito Bancario';
+                    const lista = this.state.creditos.filter(c => c.tipo !== 'personal');
+                    selectDestino.innerHTML = lista.map(c => `<option value="${c.id}">${c.descripcion}</option>`).join('');
+                    divTipoAbono.style.display = 'none';
+                    if(!document.getElementById('descripcion').value) document.getElementById('descripcion').value = 'Abono a Crédito';
+                } else if (cat === 'Pago Préstamos Personales') {
+                    divDestino.style.display = 'block';
+                    labelDestino.textContent = 'Seleccionar Préstamo Personal';
+                    const lista = this.state.creditos.filter(c => c.tipo === 'personal');
+                    selectDestino.innerHTML = lista.map(c => `<option value="${c.id}">${c.descripcion}</option>`).join('');
+                    divTipoAbono.style.display = 'none';
+                    if(!document.getElementById('descripcion').value) document.getElementById('descripcion').value = 'Pago a Amigo/Familia';
+                } else {
+                    divDestino.style.display = 'none';
+                    selectDestino.innerHTML = '';
+                }
+            },
+
+            cambiarMetodoPago: function() {
+                const metodo = document.getElementById('metodoPago').value;
+                const divOrigen = document.getElementById('divOrigenPago');
+                const selectOrigen = document.getElementById('origenPago');
+                const labelOrigen = document.getElementById('labelOrigenPago');
+                const divCuotas = document.getElementById('divCuotas');
+
+                if (metodo === 'tarjeta') {
+                    divOrigen.style.visibility = 'visible';
+                    divCuotas.style.display = 'block';
+                    labelOrigen.textContent = 'Seleccionar Tarjeta';
+                    selectOrigen.innerHTML = this.state.tarjetas.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+                } else if (metodo === 'credito') {
+                    divOrigen.style.visibility = 'visible';
+                    divCuotas.style.display = 'none';
+                    labelOrigen.textContent = 'Seleccionar Crédito';
+                    selectOrigen.innerHTML = this.state.creditos.map(c => `<option value="${c.id}">${c.descripcion}</option>`).join('');
+                } else {
+                    divOrigen.style.visibility = 'hidden';
+                    divCuotas.style.display = 'none';
+                    selectOrigen.innerHTML = '';
+                }
+            },
+
+            limpiarFormularioTransacciones: function() {
+                document.getElementById('monto').value = '';
+                document.getElementById('descripcion').value = '';
+                document.getElementById('editId').value = '';
+                document.getElementById('tituloFormTransaccion').textContent = "Nueva Transacción";
+                document.getElementById('btnCancelarEdicion').style.display = 'none';
+                document.getElementById('fechaTransaccion').valueAsDate = new Date();
+                document.getElementById('cuotas').value = '1';
+                document.getElementById('metodoPago').value = 'efectivo';
+                this.verificarCategoria();
+                this.cambiarMetodoPago();
+            },
+
+            exportarDatos: function() {
+                const data = JSON.stringify(this.state);
+                const blob = new Blob([data], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_platofacil_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+            },
+
+            importarDatos: function(input) {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        this.state = data;
+                        this.guardarDatos();
+                        this.mostrarAlerta('Datos restaurados correctamente', 'success');
+                    } catch(err) {
+                        this.mostrarAlerta('Error al leer el archivo', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            },
+
+            verificarGastosFijos: function() {
+                const hoy = new Date();
+                const anio = hoy.getFullYear();
+                const mes = hoy.getMonth(); // 0-11
+                const mesActualStr = `${anio}-${String(mes + 1).padStart(2, '0')}`;
+                const diaActual = hoy.getDate();
+                let cambios = false;
+
+                this.state.gastosFijos.forEach(f => {
+                    // Si el día fijado ya llegó o pasó en este mes, y no se ha generado registro para este mes
+                    if (f.dia <= diaActual && f.ultimaGeneracion !== mesActualStr) {
+                        
+                        // Manejo de días que no existen en el mes (ej: 31 en febrero)
+                        const ultimoDiaMes = new Date(anio, mes + 1, 0).getDate();
+                        const diaFinal = Math.min(f.dia, ultimoDiaMes);
+                        
+                        const fechaGasto = new Date(anio, mes, diaFinal);
+                        const fechaStr = fechaGasto.toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+                        this.state.transacciones.push({
+                            id: Date.now() + Math.floor(Math.random() * 10000),
+                            monto: f.monto,
+                            descripcion: f.descripcion + ' (Automático)',
+                            categoria: f.categoria,
+                            tipo: 'gasto',
+                            fecha: fechaStr,
+                            metodoPago: 'efectivo'
+                        });
+
+                        f.ultimaGeneracion = mesActualStr;
+                        cambios = true;
+                    }
+                });
+
+                if (cambios) {
+                    this.guardarDatos();
+                    this.mostrarAlerta('Se han generado gastos fijos automáticos', 'info');
+                }
+            },
+
+            verificarCorteTarjetas: function() {
+                const hoy = new Date();
+                const anio = hoy.getFullYear();
+                const mes = hoy.getMonth();
+                const mesActualStr = `${anio}-${String(mes + 1).padStart(2, '0')}`;
+                const diaActual = hoy.getDate();
+                let cambios = false;
+
+                this.state.tarjetas.forEach(t => {
+                    // Si hoy es o ya pasó el día de corte y no se ha procesado este mes
+                    if (t.diaCorte && t.diaCorte <= diaActual && t.ultimaGeneracionCorte !== mesActualStr) {
+                        
+                        // 1. Generar Cuota de Manejo
+                        if (t.cuotaManejo > 0) {
+                            const txManejo = {
+                                id: Date.now() + Math.floor(Math.random() * 10000),
+                                monto: t.cuotaManejo,
+                                descripcion: `Cuota Manejo - ${t.nombre}`,
+                                categoria: 'Mantenimiento',
+                                tipo: 'gasto',
+                                fecha: new Date().toLocaleDateString('en-CA'),
+                                metodoPago: 'tarjeta',
+                                origenId: t.id,
+                                cuotas: 1 // Se carga a la deuda del mes (contado)
+                            };
+                            this.state.transacciones.push(txManejo);
+                            this.actualizarSaldo(txManejo); // Actualizar deuda tarjeta
+                        }
+
+                        // 2. Generar Intereses (Sobre deuda diferida > 3 meses / plazos)
+                        // Nota: Se aplica a toda la deuda diferida ya que el sistema agrupa los plazos.
+                        if (t.deudaDiferida > 0 && t.interesEA > 0) {
+                            const tasaMen = Math.pow(1 + (t.interesEA / 100), 1/12) - 1;
+                            const interes = Math.round(t.deudaDiferida * tasaMen);
+                            
+                            if (interes > 0) {
+                                const txInteres = {
+                                    id: Date.now() + Math.floor(Math.random() * 10000) + 1,
+                                    monto: interes,
+                                    descripcion: `Intereses - ${t.nombre}`,
+                                    categoria: 'Pago Deudas',
+                                    tipo: 'gasto',
+                                    fecha: new Date().toLocaleDateString('en-CA'),
+                                    metodoPago: 'tarjeta',
+                                    origenId: t.id,
+                                    cuotas: 1 // Los intereses se pagan en el mes (contado)
+                                };
+                                this.state.transacciones.push(txInteres);
+                                this.actualizarSaldo(txInteres);
+                            }
+                        }
+
+                        // 3. Generar Cuotas de Compras Diferidas (Capital)
+                        const comprasDiferidas = this.state.transacciones.filter(tx => 
+                            tx.metodoPago === 'tarjeta' && 
+                            tx.origenId === t.id && 
+                            tx.cuotas > 1 &&
+                            tx.tipo === 'gasto'
+                        );
+
+                        comprasDiferidas.forEach(compra => {
+                            const fechaParts = compra.fecha.split('-');
+                            const anioCompra = parseInt(fechaParts[0]);
+                            const mesCompra = parseInt(fechaParts[1]) - 1; 
+                            const diaCompra = parseInt(fechaParts[2]);
+
+                            // Calcular meses transcurridos
+                            let mesesDiferencia = (anio - anioCompra) * 12 + (mes - mesCompra);
+                            // Calcular número de cuota actual basado en si la compra entró en el corte de su mes o pasó al siguiente
+                            let numeroCuota = mesesDiferencia + (diaCompra <= t.diaCorte ? 1 : 0);
+
+                            if (numeroCuota > 0 && numeroCuota <= compra.cuotas) {
+                                const valorCuota = Math.round(compra.monto / compra.cuotas);
+                                
+                                const txCuota = {
+                                    id: Date.now() + Math.floor(Math.random() * 100000),
+                                    monto: valorCuota,
+                                    descripcion: `Cuota ${numeroCuota}/${compra.cuotas} - ${compra.descripcion}`,
+                                    categoria: 'Pago Tarjetas',
+                                    tipo: 'cuota', // Tipo especial para visualización
+                                    fecha: new Date().toLocaleDateString('en-CA'),
+                                    metodoPago: 'tarjeta',
+                                    origenId: t.id
+                                };
+
+                                this.state.transacciones.push(txCuota);
+                                
+                                // Mover deuda: Restar de Plazos y sumar a 1 Mes (Contado)
+                                t.deudaDiferida = Math.max(0, (t.deudaDiferida || 0) - valorCuota);
+                                t.deudaContado = (t.deudaContado || 0) + valorCuota;
+                            }
+                        });
+
+                        t.ultimaGeneracionCorte = mesActualStr;
+                        cambios = true;
+                    }
+                });
+
+                if (cambios) {
+                    this.guardarDatos();
+                    this.mostrarAlerta('Corte de tarjeta procesado: Cuotas e Intereses generados', 'info');
+                }
+            },
+
+            switchTab: function(tabId) {
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                
+                const btn = document.querySelector(`button[onclick="app.switchTab('${tabId}')"]`);
+                if(btn) btn.classList.add('active');
+            },
+
+            mostrarAlerta: function(msg, tipo) {
+                const div = document.createElement('div');
+                div.className = `alert alert-${tipo}`;
+                div.textContent = msg;
+                document.querySelector('.container').prepend(div);
+                setTimeout(() => div.remove(), 3000);
+            },
+
+            formatoMoneda: function(val) {
+                return new Intl.NumberFormat('es-CO', {style:'currency', currency:'COP', minimumFractionDigits:0}).format(val);
+            },
+            
+            // Funciones para Tarjetas y Fijos (Simplificadas para el ejemplo)
+            agregarGastoFijo: function() {
+                const monto = parseFloat(document.getElementById('montoFijo').value);
+                const fecha = document.getElementById('fechaFijo').value;
+                const desc = document.getElementById('descripcionFijo').value;
+                const cat = document.getElementById('categoriaFijo').value;
+
+                if (!monto || !desc || !fecha) return this.mostrarAlerta('Faltan datos', 'error');
+                const dia = parseInt(fecha.split('-')[2]); // Extraer solo el día
+
+                this.state.gastosFijos.push({
+                    id: Date.now(),
+                    monto, dia, descripcion: desc, categoria: cat
+                });
+                
+                this.guardarDatos();
+                this.mostrarAlerta('Gasto fijo agregado', 'success');
+                document.getElementById('montoFijo').value = '';
+                document.getElementById('descripcionFijo').value = '';
+                document.getElementById('fechaFijo').value = new Date().toLocaleDateString('en-CA');
+                this.verificarGastosFijos(); // Verificar inmediatamente
+            },
+
+            eliminarGastoFijo: function(id) {
+                if(confirm('¿Borrar este gasto fijo?')) {
+                    this.state.gastosFijos = this.state.gastosFijos.filter(f => f.id !== id);
+                    this.guardarDatos();
+                }
+            },
+
+            agregarTarjeta: function() {
+                const nombre = document.getElementById('nombreTarjeta').value;
+                const tipo = document.getElementById('tipoTarjetaSelect').value;
+                const cupo = parseFloat(document.getElementById('limiteTarjeta').value);
+                const deudaContado = parseFloat(document.getElementById('deudaContado').value) || 0;
+                const deudaDiferida = parseFloat(document.getElementById('deudaDiferida').value) || 0;
+                const cuotaManejo = parseFloat(document.getElementById('cuotaManejo').value) || 0;
+                const interesEA = parseFloat(document.getElementById('interesEA').value) || 0;
+                const diaCorte = parseInt(document.getElementById('diaCorte').value) || '';
+                const diaPago = parseInt(document.getElementById('diaPagoTarjeta').value) || '';
+                const idEdit = document.getElementById('idTarjetaEdit').value;
+                
+                if (!nombre || !cupo) return this.mostrarAlerta('Faltan datos', 'error');
+
+                if(idEdit) {
+                    const idx = this.state.tarjetas.findIndex(t => t.id == idEdit);
+                    if(idx !== -1) {
+                        this.state.tarjetas[idx] = { ...this.state.tarjetas[idx], nombre, tipo, cupo, deudaContado, deudaDiferida, cuotaManejo, interesEA, diaCorte, diaPago };
+                        this.mostrarAlerta('Tarjeta actualizada', 'success');
+                    }
+                } else {
+                    this.state.tarjetas.push({ id: Date.now(), nombre, tipo, cupo, deudaContado, deudaDiferida, cuotaManejo, interesEA, diaCorte, diaPago });
+                    this.mostrarAlerta('Tarjeta agregada', 'success');
+                }
+                
+                this.guardarDatos();
+                this.limpiarFormularioTarjeta();
+            },
+
+            editarTarjeta: function(id) {
+                const t = this.state.tarjetas.find(x => x.id === id);
+                if(!t) return;
+                document.getElementById('nombreTarjeta').value = t.nombre;
+                document.getElementById('tipoTarjetaSelect').value = t.tipo || 'credito';
+                document.getElementById('limiteTarjeta').value = t.cupo;
+                document.getElementById('deudaContado').value = t.deudaContado || t.deuda || 0;
+                document.getElementById('deudaDiferida').value = t.deudaDiferida || 0;
+                document.getElementById('cuotaManejo').value = t.cuotaManejo || 0;
+                document.getElementById('interesEA').value = t.interesEA || 0;
+                document.getElementById('diaCorte').value = t.diaCorte || '';
+                document.getElementById('diaPagoTarjeta').value = t.diaPago || '';
+                document.getElementById('idTarjetaEdit').value = t.id;
+                document.getElementById('tituloFormTarjeta').textContent = "Editar Tarjeta";
+                document.getElementById('btnCancelarTarjeta').style.display = 'inline-block';
+            },
+
+            limpiarFormularioTarjeta: function() {
+                document.getElementById('nombreTarjeta').value = '';
+                document.getElementById('tipoTarjetaSelect').value = 'credito';
+                document.getElementById('limiteTarjeta').value = '';
+                document.getElementById('deudaContado').value = '';
+                document.getElementById('deudaDiferida').value = '';
+                document.getElementById('cuotaManejo').value = '';
+                document.getElementById('interesEA').value = '';
+                document.getElementById('diaCorte').value = '';
+                document.getElementById('diaPagoTarjeta').value = '';
+                document.getElementById('idTarjetaEdit').value = '';
+                document.getElementById('tituloFormTarjeta').textContent = "Nueva Tarjeta";
+                document.getElementById('btnCancelarTarjeta').style.display = 'none';
+            },
+
+            eliminarTarjeta: function(id) {
+                if(confirm('¿Borrar esta tarjeta?')) {
+                    this.state.tarjetas = this.state.tarjetas.filter(t => t.id !== id);
+                    this.guardarDatos();
+                }
+            },
+
+            agregarCredito: function() {
+                const desc = document.getElementById('descCredito').value;
+                const tipo = document.getElementById('tipoCreditoSelect').value;
+                const monto = parseFloat(document.getElementById('montoCredito').value);
+                const interes = parseFloat(document.getElementById('interesCredito').value) || 0;
+                const saldo = parseFloat(document.getElementById('saldoCredito').value);
+                const fechaInicio = document.getElementById('fechaInicioCredito').value;
+                const fechaFin = document.getElementById('fechaFinCredito').value;
+                const frecuencia = document.getElementById('frecuenciaCredito').value;
+                const idEdit = document.getElementById('idCreditoEdit').value;
+
+                if (!desc || !monto || isNaN(saldo)) return this.mostrarAlerta('Faltan datos', 'error');
+
+                if(idEdit) {
+                    const idx = this.state.creditos.findIndex(c => c.id == idEdit);
+                    if(idx !== -1) {
+                        this.state.creditos[idx] = { 
+                            ...this.state.creditos[idx], tipo,
+                            descripcion: desc, montoOriginal: monto, interes, saldo, fechaInicio, fechaFin, frecuencia 
+                        };
+                        this.mostrarAlerta('Crédito actualizado', 'success');
+                    }
+                } else {
+                    this.state.creditos.push({ 
+                        id: Date.now(), tipo, descripcion: desc, montoOriginal: monto, interes, saldo, fechaInicio, fechaFin, frecuencia
+                    });
+                    this.mostrarAlerta('Crédito agregado', 'success');
+                }
+
+                this.guardarDatos();
+                this.limpiarFormularioCredito();
+            },
+
+            editarCredito: function(id) {
+                const c = this.state.creditos.find(x => x.id === id);
+                if(!c) return;
+                document.getElementById('descCredito').value = c.descripcion;
+                document.getElementById('tipoCreditoSelect').value = c.tipo || 'bancario';
+                document.getElementById('montoCredito').value = c.montoOriginal;
+                document.getElementById('interesCredito').value = c.interes;
+                document.getElementById('saldoCredito').value = c.saldo;
+                document.getElementById('fechaInicioCredito').value = c.fechaInicio || '';
+                document.getElementById('fechaFinCredito').value = c.fechaFin || '';
+                document.getElementById('frecuenciaCredito').value = c.frecuencia || 'mensual';
+                document.getElementById('idCreditoEdit').value = c.id;
+                document.getElementById('tituloFormCredito').textContent = "Editar Crédito";
+                document.getElementById('btnCancelarCredito').style.display = 'inline-block';
+            },
+
+            limpiarFormularioCredito: function() {
+                ['descCredito', 'montoCredito', 'interesCredito', 'saldoCredito', 'fechaInicioCredito', 'fechaFinCredito'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('idCreditoEdit').value = '';
+                document.getElementById('tipoCreditoSelect').value = 'bancario';
+                document.getElementById('tituloFormCredito').textContent = "Nuevo Crédito";
+                document.getElementById('btnCancelarCredito').style.display = 'none';
+            },
+
+            eliminarCredito: function(id) {
+                if(confirm('¿Borrar este crédito?')) {
+                    this.state.creditos = this.state.creditos.filter(c => c.id !== id);
+                    this.guardarDatos();
+                }
+            }
+        };
+
+        // Iniciar App
+        app.init();
+
+        // Registrar Service Worker para PWA (Funcionalidad Offline e Instalación)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registrado')).catch(err => console.log('SW error', err));
+            });
+        }
+    </script>
+</body>
+</html>
